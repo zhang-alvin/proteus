@@ -16,30 +16,31 @@ RUN rm -rf proteus && \
     cd proteus && \
     git checkout master && \
     make N=4 develop && \
-    CC=gcc CXX=g++ ./linux/bin/pip3 install matplotlib && \
-    PATH=/home/$NB_USER/proteus/linux/bin:$PATH make jupyter && \
-    CC=gcc CXX=g++ PATH=/home/$NB_USER/proteus/linux/bin:$PATH ./linux/bin/pip3 install jupyterhub && \
+    make install && \
+    #CC=gcc CXX=g++ ./linux/bin/pip3 install matplotlib && \
+    #PATH=/home/$NB_USER/proteus/linux/bin:$PATH make jupyter && \
+    #CC=gcc CXX=g++ PATH=/home/$NB_USER/proteus/linux/bin:$PATH ./linux/bin/pip3 install jupyterhub && \
     rm -rf build && \
     rm -rf air-water-vv && \
     rm -rf .git && \
     rm -rf stack/.git && \
     rm -rf /home/$NB_USER/.cache 
 
-ENV PATH /home/$NB_USER/proteus/linux/bin:$PATH
-ENV LD_LIBRARY_PATH /home/$NB_USER/proteus/linux/lib:$LD_LIBRARY_PATH
+#ENV PATH /home/$NB_USER/proteus/linux/bin:$PATH
+#ENV LD_LIBRARY_PATH /home/$NB_USER/proteus/linux/lib:$LD_LIBRARY_PATH
 
-USER root
+#USER root
 
-CMD ["start-notebook.sh"]
+#CMD ["start-notebook.sh"]
 
 # Add local files as late as possible to avoid cache busting
-ADD https://raw.githubusercontent.com/jupyter/docker-stacks/master/base-notebook/start.sh /usr/local/bin/start.sh
-ADD https://raw.githubusercontent.com/jupyter/docker-stacks/master/base-notebook/start-notebook.sh /usr/local/bin/start-notebook.sh
-ADD https://raw.githubusercontent.com/jupyter/docker-stacks/master/base-notebook/start-singleuser.sh /usr/local/bin/start-singleuser.sh
+#ADD https://raw.githubusercontent.com/jupyter/docker-stacks/master/base-notebook/start.sh /usr/local/bin/start.sh
+#ADD https://raw.githubusercontent.com/jupyter/docker-stacks/master/base-notebook/start-notebook.sh /usr/local/bin/start-notebook.sh
+#ADD https://raw.githubusercontent.com/jupyter/docker-stacks/master/base-notebook/start-singleuser.sh /usr/local/bin/start-singleuser.sh
 
-RUN chmod a+rx /usr/local/bin/*
+#RUN chmod a+rx /usr/local/bin/*
 
-RUN ipython kernel install
+#RUN ipython kernel install
 
 USER $NB_USER
 
