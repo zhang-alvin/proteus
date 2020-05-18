@@ -28,7 +28,7 @@ class MeshAdaptPUMIDrvr{
 
   //Functions to construct proteus mesh data structures
   int reconstructFromProteus(Mesh& mesh, Mesh& globalMesh,int hasModel);
-  int reconstructFromProteus2(Mesh& mesh, int* isModelVert, int* bFaces);
+  int reconstructFromProteus2(Mesh& mesh, int* isModelVert, int* bFaces,int*elementMaterials);
   int constructFromSerialPUMIMesh(Mesh& mesh);
   int constructFromParallelPUMIMesh(Mesh& mesh, Mesh& subdomain_mesh);
   int updateMaterialArrays(Mesh& mesh,int dim, int bdryID, int GeomTag);

@@ -7,6 +7,7 @@ import numpy
 from proteus.Profiling import logEvent
 from proteus import MeshTools
 from proteus import SimTools
+import copy
 
 #try making a class that's build on top of NS_base for these functions 
 class PUMI_helper:
@@ -93,7 +94,7 @@ class PUMI_helper:
             if(nd==3):
               meshBoundaryConnectivity[elementBdyIdx][4] = mesh.elementBoundaryNodesArray[exteriorIdx][2]
 
-          domain.AdaptManager.PUMIAdapter.reconstructFromProteus2(mesh.cmesh,isModelVert,meshBoundaryConnectivity)
+          domain.AdaptManager.PUMIAdapter.reconstructFromProteus2(mesh.cmesh,isModelVert,meshBoundaryConnectivity,mesh.elementMaterialTypes)
 
      def PUMI_reallocate(self,mesh):
         p0 = self.pList[0]
@@ -153,7 +154,6 @@ class PUMI_helper:
 
         #Shock capturing lagging needs to be matched
 
-        import copy
 
         ###Details for solution transfer
         #To get shock capturing lagging correct, the numDiff array needs to be computed correctly with the u^{n} solution.
@@ -170,10 +170,16 @@ class PUMI_helper:
                 lm.u_store = lm.u.copy()
                 for ci in range(0,lm.coefficients.nc):
                     lm.u_store[ci] = lm.u[ci].copy()
+                    lm.u_store[ci].dof_last = copy.deepcopy(lm.u[ci].dof_last)
                 lm.dt_store = copy.deepcopy(lm.timeIntegration.dt)
+                lm.t_store = copy.deepcopy(lm.timeIntegration.t)
                 for ci in range(0,lm.coefficients.nc):
                     lm.u[ci].dof[:] = lm.u[ci].dof_last
                 lm.setFreeDOF(lu)
+                #the previous t isn't stored, but is necessary for RelaxationZone computations
+                if(hasattr(lmOld.timeIntegration,'dtLast')):
+                    lm.timeIntegration.t =lmOld.timeIntegration.tLast  #lmOld.timeIntegration.tLast-lmOld.timeIntegration.dtLast 
+
 
         #All solution fields are now in state u^{n-1} and used to get m_tmp and u_sge
         for m,mOld in zip(self.modelList, modelListOld):
@@ -187,6 +193,10 @@ class PUMI_helper:
 
                 #update the eddy-viscosity history
                 lm.calculateAuxiliaryQuantitiesAfterStep()
+        #AUX
+        if( (abs(self.systemStepController.t_system_last - self.tnList[1])> 1e-12 and  abs(self.systemStepController.t_system_last - self.tnList[0])> 1e-12 )
+          or self.opts.hotStart):
+            self.updateAux()
 
 
         #shock capturing depends on m_tmp or m_last (if lagged). m_tmp is modified by mass-correction and is pushed into m_last during updateTimeHistory().
@@ -256,6 +266,7 @@ class PUMI_helper:
 
               lm.timeIntegration.postAdaptUpdate(lmOld.timeIntegration)
               lm.timeIntegration.dt = lm.dt_store
+              lm.timeIntegration.t = lm.t_store
               
         ###Shock capturing update happens with the time history update
               if(lmOld.shockCapturing and lmOld.shockCapturing.nStepsToDelay is not None and lmOld.shockCapturing.nSteps > lmOld.shockCapturing.nStepsToDelay):
@@ -265,6 +276,18 @@ class PUMI_helper:
 
               #update the eddy-viscosity history
               lm.calculateAuxiliaryQuantitiesAfterStep()
+
+        self.updateAux()
+
+     def updateAux(self):
+        #this is needed to get relaxation zones working, sets the quadrature fields appropriately
+        for model in self.modelList:
+            logEvent("Auxiliary variable calculate for model %s" % (model.name,))
+            for av in self.auxiliaryVariables[model.name]:
+                #don't want gauges being computed again
+                #if not isinstance(av,proteus.Gauges.Gauges) and not isinstance(av,proteus.mbd.CouplingFSI.ProtChSystem):
+                if isinstance(av,proteus.mprans.BoundaryConditions.RelaxationZoneWaveGenerator):
+                    av.calculate()
 
      def PUMI2Proteus(self,domain):
 
