@@ -23,4 +23,4 @@ RUN rm -rf proteus && \
     rm -rf /home/$NB_USER/.cache 
 
 ENV PATH /home/$NB_USER/proteus/linux/bin:$PATH
-ENV LD_LIBRARY_PATH /home/$NB_USER/proteus/linux/lib:/home/$NB_USER/proteus/linux/lib64:$LD_LIBRARY_PATH
+#ENV LD_LIBRARY_PATH /home/$NB_USER/proteus/linux/lib:/home/$NB_USER/proteus/linux/lib64:$LD_LIBRARY_PATH
